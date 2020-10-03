@@ -3,7 +3,9 @@
 use array2d::Array2D;
 
 fn main() {
-    let mut board = get_example();
+    let mut board = get_example_4();
+    solve_board(&mut board).unwrap();
+    let mut board = get_example_6();
     solve_board(&mut board).unwrap();
 }
 
@@ -27,12 +29,23 @@ const B: Tile = Tile::Filled(Color::Blue);
 
 type Board = Array2D<Tile>;
 
-fn get_example() -> Board {
+fn get_example_4() -> Board {
     Array2D::from_rows(&[
         vec![U, B, U, U],
         vec![U, U, U, U],
         vec![U, B, B, U],
         vec![U, U, U, R],
+    ])
+}
+
+fn get_example_6() -> Board {
+    Array2D::from_rows(&[
+        vec![R, U, U, B, U, B],
+        vec![U, U, U, U, U, U],
+        vec![R, R, U, B, U, U],
+        vec![U, R, U, U, U, U],
+        vec![U, U, U, B, U, U],
+        vec![U, U, U, U, R, U],
     ])
 }
 
@@ -72,17 +85,17 @@ fn print_board(board: &Board) {
 
 fn solve_board(board: &mut Board) -> Answer {
     loop {
+        print_board(board);
         let board_copy = board.clone();
-        print_board(board);
-        println!();
+        // print_board(board);
+        // println!();
         solve_surround_two_in_a_row(board)?;
-        print_board(board);
-        println!();
+        // print_board(board);
+        // println!();
         solve_fill_in_between_two(board)?;
-        print_board(board);
-        println!();
+        // print_board(board);
+        // println!();
         solve_equal_colors(board)?;
-        print_board(board);
         println!();
         if board == &board_copy {
             break;
