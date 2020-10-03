@@ -22,12 +22,6 @@ enum Color {
     Blue,
 }
 
-#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
-enum Axis {
-    Row,
-    Column,
-}
-
 const U: Tile = Tile::Unfilled;
 const R: Tile = Tile::Filled(Color::Red);
 const B: Tile = Tile::Filled(Color::Blue);
@@ -35,7 +29,7 @@ const B: Tile = Tile::Filled(Color::Blue);
 type Board = Array2D<Tile>;
 
 fn get_example() -> Board {
-    Array2D::from_rows(&vec![
+    Array2D::from_rows(&[
         vec![U, B, U, U],
         vec![U, U, U, U],
         vec![U, B, B, U],
@@ -86,8 +80,6 @@ fn solve_surround_two_in_a_row(board: &mut Board) -> Result<(), ()> {
 fn solve_surround_two_in_a_row_rows(board: &mut Board) -> Result<(), ()> {
     for row_index in 0..board.num_rows() {
         for column_index in 0..(board.num_columns() - 1) {
-            // let column_indices = (column_index, column_index + 1, column_index + 2);
-            // two_in_a_row(board, row_index, column_indices, Axis::Row)?;
             let tile1 = board[(row_index, column_index)];
             let tile2 = board[(row_index, column_index + 1)];
 
@@ -110,8 +102,6 @@ fn solve_surround_two_in_a_row_rows(board: &mut Board) -> Result<(), ()> {
 fn solve_surround_two_in_a_row_columns(board: &mut Board) -> Result<(), ()> {
     for column_index in 0..board.num_columns() {
         for row_index in 0..(board.num_rows() - 1) {
-            // let column_indices = (column_index, column_index + 1, column_index + 2);
-            // two_in_a_row(board, row_index, column_indices, Axis::Row)?;
             let tile1 = board[(row_index, column_index)];
             let tile2 = board[(row_index + 1, column_index)];
 
@@ -130,46 +120,12 @@ fn solve_surround_two_in_a_row_columns(board: &mut Board) -> Result<(), ()> {
     }
     Ok(())
 }
-// fn two_in_a_row(
-//     board: &mut Board,
-//     major_index: usize,
-//     minor_indices: (usize, usize, usize),
-//     axis: Axis,
-// ) -> Result<(), ()> {
-//     println!("two_in_a_row: board, {:?}, {:?}, {:?}", major_index, minor_indices, axis);
-//     let (minor1, minor2, minor3) = minor_indices;
-//     let color1: Color = get_tile(board, major_index, minor1, axis)
-//         .and_then(|tile| tile.get_color())
-//         .ok_or(())?;
-//     let color2: Color = get_tile(board, major_index, minor2, axis)
-//         .and_then(|tile| tile.get_color())
-//         .ok_or(())?;
-//     if color1 != color2 {
-//         return Ok(());
-//     };
-//     let tile3 = get_tile(board, major_index, minor3, axis).ok_or(())?;
-//     ensure_tile_equals(Some(tile3), color1.opposite())
-// }
-
-// fn get_tile(
-//     board: &mut Board,
-//     major_index: usize,
-//     minor_index: usize,
-//     axis: Axis,
-// ) -> Option<&mut Tile> {
-//     let (row, column) = match axis {
-//         Axis::Row => (major_index, minor_index),
-//         Axis::Column => (minor_index, major_index),
-//     };
-//     board.get_mut(row, column)
-// }
 
 fn ensure_tile_equals(tile: Option<&mut Tile>, color: Color) -> Result<(), ()> {
     let tile = match tile {
         Some(tile) => tile,
-        Nothing => return Ok(()),
+        None => return Ok(()),
     };
-    // let tile = tile.ok_or(())?;
     if tile == &mut Tile::Filled(color.opposite()) {
         println!(
             "Tile was {:?} but was supposed to be {:?}",
