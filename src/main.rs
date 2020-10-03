@@ -4,10 +4,7 @@ use array2d::Array2D;
 
 fn main() {
     let mut board = get_example();
-    print_board(&board);
-    println!();
     solve_board(&mut board).unwrap();
-    print_board(&board);
 }
 
 type Answer = Result<(), ()>;
@@ -74,8 +71,23 @@ fn print_board(board: &Board) {
 }
 
 fn solve_board(board: &mut Board) -> Answer {
-    solve_surround_two_in_a_row(board)?;
-    solve_fill_in_between_two(board)?;
+    loop {
+        let board_copy = board.clone();
+        print_board(board);
+        println!();
+        solve_surround_two_in_a_row(board)?;
+        print_board(board);
+        println!();
+        solve_fill_in_between_two(board)?;
+        print_board(board);
+        println!();
+        solve_equal_colors(board)?;
+        print_board(board);
+        println!();
+        if board == &board_copy {
+            break;
+        }
+    }
     Ok(())
 }
 
@@ -100,7 +112,9 @@ fn solve_surround_two_in_a_row_rows(board: &mut Board) -> Answer {
                 _ => continue,
             };
 
-            ensure_tile_equals(board.get_mut(row_index, column_index - 1), color.opposite())?;
+            if column_index > 0 {
+                ensure_tile_equals(board.get_mut(row_index, column_index - 1), color.opposite())?;
+            }
             ensure_tile_equals(board.get_mut(row_index, column_index + 2), color.opposite())?;
         }
     }
@@ -122,7 +136,9 @@ fn solve_surround_two_in_a_row_columns(board: &mut Board) -> Answer {
                 _ => continue,
             };
 
-            ensure_tile_equals(board.get_mut(row_index - 1, column_index), color.opposite())?;
+            if row_index > 0 {
+                ensure_tile_equals(board.get_mut(row_index - 1, column_index), color.opposite())?;
+            }
             ensure_tile_equals(board.get_mut(row_index + 2, column_index), color.opposite())?;
         }
     }
@@ -172,6 +188,56 @@ fn solve_fill_in_between_two_columns(board: &mut Board) -> Answer {
             };
 
             ensure_tile_equals(board.get_mut(row_index + 1, column_index), color.opposite())?;
+        }
+    }
+    Ok(())
+}
+
+fn solve_equal_colors(board: &mut Board) -> Answer {
+    solve_equal_colors_rows(board, Color::Red)?;
+    solve_equal_colors_rows(board, Color::Blue)?;
+    solve_equal_colors_columns(board, Color::Red)?;
+    solve_equal_colors_columns(board, Color::Blue)?;
+    Ok(())
+}
+
+fn solve_equal_colors_rows(board: &mut Board, color: Color) -> Answer {
+    for row_index in 0..board.num_rows() {
+        let max_tiles_of_one_color = board.row_len() / 2;
+        let num_of_this_color = board
+            .row_iter(row_index)
+            .filter(|tile| tile == &&Tile::Filled(color))
+            .count();
+        if num_of_this_color > max_tiles_of_one_color {
+            return Err(()); // Too many
+        } else if num_of_this_color == max_tiles_of_one_color {
+            for column_index in 0..board.num_columns() {
+                let tile = board.get_mut(row_index, column_index).ok_or(())?;
+                if tile == &mut Tile::Unfilled {
+                    *tile = Tile::Filled(color.opposite());
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn solve_equal_colors_columns(board: &mut Board, color: Color) -> Answer {
+    for column_index in 0..board.num_columns() {
+        let max_tiles_of_one_color = board.column_len() / 2;
+        let num_of_this_color = board
+            .column_iter(column_index)
+            .filter(|tile| tile == &&Tile::Filled(color))
+            .count();
+        if num_of_this_color > max_tiles_of_one_color {
+            return Err(()); // Too many
+        } else if num_of_this_color == max_tiles_of_one_color {
+            for row_index in 0..board.num_rows() {
+                let tile = board.get_mut(row_index, column_index).ok_or(())?;
+                if tile == &mut Tile::Unfilled {
+                    *tile = Tile::Filled(color.opposite());
+                }
+            }
         }
     }
     Ok(())
