@@ -6,9 +6,11 @@ fn main() {
     let mut board = get_example();
     print_board(&board);
     println!();
-    solve_surround_two_in_a_row(&mut board).unwrap();
+    solve_board(&mut board).unwrap();
     print_board(&board);
 }
+
+type Answer = Result<(), ()>;
 
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 enum Tile {
@@ -71,13 +73,19 @@ fn print_board(board: &Board) {
     }
 }
 
-fn solve_surround_two_in_a_row(board: &mut Board) -> Result<(), ()> {
+fn solve_board(board: &mut Board) -> Answer {
+    solve_surround_two_in_a_row(board)?;
+    solve_fill_in_between_two(board)?;
+    Ok(())
+}
+
+fn solve_surround_two_in_a_row(board: &mut Board) -> Answer {
     solve_surround_two_in_a_row_rows(board)?;
     solve_surround_two_in_a_row_columns(board)?;
     Ok(())
 }
 
-fn solve_surround_two_in_a_row_rows(board: &mut Board) -> Result<(), ()> {
+fn solve_surround_two_in_a_row_rows(board: &mut Board) -> Answer {
     for row_index in 0..board.num_rows() {
         for column_index in 0..(board.num_columns() - 1) {
             let tile1 = board[(row_index, column_index)];
@@ -99,7 +107,7 @@ fn solve_surround_two_in_a_row_rows(board: &mut Board) -> Result<(), ()> {
     Ok(())
 }
 
-fn solve_surround_two_in_a_row_columns(board: &mut Board) -> Result<(), ()> {
+fn solve_surround_two_in_a_row_columns(board: &mut Board) -> Answer {
     for column_index in 0..board.num_columns() {
         for row_index in 0..(board.num_rows() - 1) {
             let tile1 = board[(row_index, column_index)];
@@ -121,7 +129,55 @@ fn solve_surround_two_in_a_row_columns(board: &mut Board) -> Result<(), ()> {
     Ok(())
 }
 
-fn ensure_tile_equals(tile: Option<&mut Tile>, color: Color) -> Result<(), ()> {
+fn solve_fill_in_between_two(board: &mut Board) -> Answer {
+    solve_fill_in_between_two_rows(board)?;
+    solve_fill_in_between_two_columns(board)?;
+    Ok(())
+}
+
+fn solve_fill_in_between_two_rows(board: &mut Board) -> Answer {
+    for row_index in 0..board.num_rows() {
+        for column_index in 0..(board.num_columns() - 2) {
+            let tile1 = board[(row_index, column_index)];
+            let tile3 = board[(row_index, column_index + 2)];
+
+            if tile1 != tile3 {
+                continue;
+            }
+
+            let color = match tile1 {
+                Tile::Filled(color) => color,
+                _ => continue,
+            };
+
+            ensure_tile_equals(board.get_mut(row_index, column_index + 1), color.opposite())?;
+        }
+    }
+    Ok(())
+}
+
+fn solve_fill_in_between_two_columns(board: &mut Board) -> Answer {
+    for column_index in 0..board.num_columns() {
+        for row_index in 0..(board.num_rows() - 2) {
+            let tile1 = board[(row_index, column_index)];
+            let tile3 = board[(row_index + 2, column_index)];
+
+            if tile1 != tile3 {
+                continue;
+            }
+
+            let color = match tile1 {
+                Tile::Filled(color) => color,
+                _ => continue,
+            };
+
+            ensure_tile_equals(board.get_mut(row_index + 1, column_index), color.opposite())?;
+        }
+    }
+    Ok(())
+}
+
+fn ensure_tile_equals(tile: Option<&mut Tile>, color: Color) -> Answer {
     let tile = match tile {
         Some(tile) => tile,
         None => return Ok(()),
