@@ -7,6 +7,8 @@ fn main() {
     solve_board(&mut board).unwrap();
     let mut board = get_example_6();
     solve_board(&mut board).unwrap();
+    let mut board = get_example_8();
+    solve_board(&mut board).unwrap();
 }
 
 type Answer = Result<(), ()>;
@@ -49,6 +51,19 @@ fn get_example_6() -> Board {
     ])
 }
 
+fn get_example_8() -> Board {
+    Array2D::from_rows(&[
+        vec![R, U, U, B, U, U, U, U],
+        vec![U, U, U, B, U, U, U, R],
+        vec![U, R, U, U, U, U, U, U],
+        vec![U, U, B, U, U, U, R, R],
+        vec![B, U, U, B, B, U, U, U],
+        vec![U, B, U, U, U, U, R, U],
+        vec![U, U, U, U, U, U, U, R],
+        vec![B, U, B, U, B, U, U, U],
+    ])
+}
+
 impl Tile {
     fn to_char(self) -> char {
         match self {
@@ -61,8 +76,8 @@ impl Tile {
 impl Color {
     fn to_char(self) -> char {
         match self {
-            Color::Red => 'R',
-            Color::Blue => 'B',
+            Color::Red => '+',
+            Color::Blue => 'o',
         }
     }
 
@@ -77,7 +92,7 @@ impl Color {
 fn print_board(board: &Board) {
     for row in board.rows_iter() {
         for tile in row {
-            print!("{}", tile.to_char())
+            print!("{} ", tile.to_char())
         }
         println!();
     }
