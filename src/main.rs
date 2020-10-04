@@ -9,6 +9,10 @@ fn main() {
     solve_board(&mut board).unwrap();
     let mut board = get_example_8();
     solve_board(&mut board).unwrap();
+    let mut board = get_example_10();
+    solve_board(&mut board).unwrap();
+    let mut board = get_example_12();
+    solve_board(&mut board).unwrap();
 }
 
 type Answer = Result<(), ()>;
@@ -64,11 +68,50 @@ fn get_example_8() -> Board {
     ])
 }
 
+fn get_example_10() -> Board {
+    Array2D::from_rows(&[
+        vec![R, U, U, U, U, U, U, U, U, U],
+        vec![U, U, U, U, B, B, U, U, R, B],
+        vec![U, U, B, U, U, U, U, U, U, B],
+        vec![U, U, B, U, R, U, B, U, U, U],
+        vec![U, R, U, U, U, U, U, U, U, U],
+        vec![U, B, U, U, U, U, R, U, R, U],
+        vec![B, U, U, R, B, U, U, U, B, U],
+        vec![U, U, B, U, U, U, U, B, U, R],
+        vec![U, R, U, U, R, U, U, U, R, U],
+        vec![U, U, B, B, U, U, B, U, U, R],
+    ])
+}
+
+fn get_example_12() -> Board {
+    Array2D::from_rows(&[
+        vec![U, U, U, R, U, B, R, B, U, R, R, U],
+        vec![B, U, U, R, U, U, U, U, U, U, U, U],
+        vec![U, U, B, B, U, U, B, U, U, B, U, U],
+        vec![U, R, U, U, U, U, U, U, U, B, B, U],
+        vec![U, U, U, R, U, U, B, U, U, U, B, R],
+        vec![U, R, B, U, U, U, U, B, U, U, U, U],
+        vec![U, U, U, R, R, U, U, B, U, U, R, B],
+        vec![U, U, U, U, U, B, R, U, U, U, U, U],
+        vec![U, U, R, U, U, U, U, U, U, U, U, U],
+        vec![U, U, U, R, U, U, U, U, B, R, U, B],
+        vec![U, R, U, U, U, U, B, U, U, U, B, U],
+        vec![R, R, U, U, U, U, B, U, R, U, U, B],
+    ])
+}
+
 impl Tile {
     fn to_char(self) -> char {
         match self {
             Tile::Unfilled => '_',
             Tile::Filled(color) => color.to_char(),
+        }
+    }
+
+    fn get_color(self) -> Option<Color> {
+        match self {
+            Tile::Unfilled => None,
+            Tile::Filled(color) => Some(color),
         }
     }
 }
@@ -111,6 +154,9 @@ fn solve_board(board: &mut Board) -> Answer {
         // print_board(board);
         // println!();
         solve_equal_colors(board)?;
+        // print_board(board);
+        // println!();
+        solve_no_two_lines_same(board)?;
         println!();
         if board == &board_copy {
             break;
@@ -268,6 +314,114 @@ fn solve_equal_colors_columns(board: &mut Board, color: Color) -> Answer {
             }
         }
     }
+    Ok(())
+}
+
+fn solve_no_two_lines_same(board: &mut Board) -> Answer {
+    solve_no_two_lines_same_rows(board)?;
+    solve_no_two_lines_same_columns(board)?;
+    Ok(())
+}
+
+fn solve_no_two_lines_same_rows(board: &mut Board) -> Answer {
+    let mut filled_unfilled_indices = None;
+    for filled_index in 0..board.num_rows() {
+        let num_unfilled = board
+            .row_iter(filled_index)
+            .filter(|tile| tile == &&Tile::Unfilled)
+            .count();
+        if num_unfilled != 0 {
+            continue;
+        }
+        let filled_row = board.row_iter(filled_index).collect::<Vec<_>>();
+        for unfilled_index in (0..board.num_rows()).filter(|&i| i != filled_index) {
+            let num_unfilled = board
+                .row_iter(unfilled_index)
+                .filter(|tile| tile == &&Tile::Unfilled)
+                .count();
+            // We want exactly 2 to be unfilled
+            if num_unfilled != 2 {
+                continue;
+            }
+            let num_different = filled_row
+                .iter()
+                .zip(board.row_iter(unfilled_index))
+                .filter(|(tile1, tile2)| tile1 != &tile2)
+                .count();
+            // There are at least two different because the filled row has no unfilled tiles, while
+            // the filled row has exactly 2 unfilled tiles. If there are more than 2 different, then
+            // they don't match
+            if num_different != 2 {
+                continue;
+            }
+            filled_unfilled_indices = Some((filled_index, unfilled_index));
+        }
+    }
+
+    if let Some((filled_index, unfilled_index)) = filled_unfilled_indices {
+        for column_index in 0..board.row_len() {
+            if board[(unfilled_index, column_index)] == Tile::Unfilled {
+                board[(unfilled_index, column_index)] = Tile::Filled(
+                    board[(filled_index, column_index)]
+                        .get_color()
+                        .unwrap()
+                        .opposite(),
+                );
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn solve_no_two_lines_same_columns(board: &mut Board) -> Answer {
+    let mut filled_unfilled_indices = Vec::new();
+    for filled_index in 0..board.num_columns() {
+        let num_unfilled = board
+            .column_iter(filled_index)
+            .filter(|tile| tile == &&Tile::Unfilled)
+            .count();
+        if num_unfilled != 0 {
+            continue;
+        }
+        let filled_column = board.column_iter(filled_index).collect::<Vec<_>>();
+        for unfilled_index in (0..board.num_columns()).filter(|&i| i != filled_index) {
+            let num_unfilled = board
+                .column_iter(unfilled_index)
+                .filter(|tile| tile == &&Tile::Unfilled)
+                .count();
+            // We want exactly 2 to be unfilled
+            if num_unfilled != 2 {
+                continue;
+            }
+            let num_different = filled_column
+                .iter()
+                .zip(board.column_iter(unfilled_index))
+                .filter(|(tile1, tile2)| tile1 != &tile2)
+                .count();
+            // There are at least two different because the filled column has no unfilled tiles, while
+            // the filled column has exactly 2 unfilled tiles. If there are more than 2 different, then
+            // they don't match
+            if num_different != 2 {
+                continue;
+            }
+            filled_unfilled_indices.push((filled_index, unfilled_index));
+        }
+    }
+
+    for (filled_index, unfilled_index) in filled_unfilled_indices {
+        for row_index in 0..board.column_len() {
+            if board[(row_index, unfilled_index)] == Tile::Unfilled {
+                board[(row_index, unfilled_index)] = Tile::Filled(
+                    board[(row_index, filled_index)]
+                        .get_color()
+                        .unwrap()
+                        .opposite(),
+                );
+            }
+        }
+    }
+
     Ok(())
 }
 
